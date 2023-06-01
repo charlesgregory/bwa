@@ -146,8 +146,16 @@ kswr_t ksw_u8(kswq_t *q, int tlen, const uint8_t *target, int _o_del, int _e_del
 #define __max_16(ret, xx) (ret) = vmaxvq_u8((xx))
 #define allzero_16(xx) (vmaxvq_u8((xx)) == 0)
 #elif defined __VSX__
-#define __max_16(ret, xx) (ret) = vec_max((xx))
-#define allzero_16(xx) (vec_max((xx)) == 0)
+#define __max_16(ret, xx) do { \
+		(xx) = _mm_max_epu8((xx), _mm_srli_si128((xx), 8)); \
+		(xx) = _mm_max_epu8((xx), _mm_srli_si128((xx), 4)); \
+		(xx) = _mm_max_epu8((xx), _mm_srli_si128((xx), 2)); \
+		(xx) = _mm_max_epu8((xx), _mm_srli_si128((xx), 1)); \
+    	(ret) = _mm_extract_epi16((xx), 0) & 0x00ff; \
+	} while (0)
+
+// Given entries with arbitrary values, return whether they are all 0x00
+#define allzero_16(xx) (_mm_movemask_epi8(_mm_cmpeq_epi8((xx), zero)) == 0xffff)
 #else
 #define __max_16(ret, xx) (ret) = m128i_max_u8((xx))
 #define allzero_16(xx) (m128i_allzero((xx)))
@@ -280,8 +288,15 @@ kswr_t ksw_i16(kswq_t *q, int tlen, const uint8_t *target, int _o_del, int _e_de
 #define __max_8(ret, xx) (ret) = vmaxvq_s16(vreinterpretq_s16_u8((xx)))
 #define allzero_0f_8(xx) (vmaxvq_u16(vreinterpretq_u16_u8((xx))) == 0)
 #elif defined __VSX__
-#define __max_8(ret, xx) (ret) = vec_max((vector signed short)((xx)))
-#define allzero_0f_8(xx) (vec_max((vector unsigned short)((xx))) == 0)
+#define __max_8(ret, xx) do { \
+		(xx) = _mm_max_epi16((xx), _mm_srli_si128((xx), 8)); \
+		(xx) = _mm_max_epi16((xx), _mm_srli_si128((xx), 4)); \
+		(xx) = _mm_max_epi16((xx), _mm_srli_si128((xx), 2)); \
+    	(ret) = _mm_extract_epi16((xx), 0); \
+	} while (0)
+
+// Given entries all either 0x0000 or 0xffff, return whether they are all 0x0000
+#define allzero_0f_8(xx) (!_mm_movemask_epi8((xx)))
 #else
 #define __max_8(ret, xx) (ret) = m128i_max_s16((xx))
 #define allzero_0f_8(xx) (m128i_allzero((xx)))
