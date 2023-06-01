@@ -88,7 +88,7 @@ static inline __m128i _mm_bsrli_si128(__m128i a, const int n) {
  
   if (n < 16)
 #ifdef __LITTLE_ENDIAN__
-    if (builtin_constant_p(n))
+    if (__builtin_constant_p(n))
       /* Would like to use Vector Shift Left Double by Octet
          Immediate here to use the immediate form and avoid
          load of n * 8 value into a separate VR.  */
