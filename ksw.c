@@ -30,6 +30,8 @@
 #include <emmintrin.h>
 #elif defined __ARM_NEON
 #include "neon_sse.h"
+#elif defined __VSX__
+#include "altivec_sse.h"
 #else
 #include "scalar_sse.h"
 #endif
