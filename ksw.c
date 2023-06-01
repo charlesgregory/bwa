@@ -119,8 +119,6 @@ kswq_t *ksw_qinit(int size, int qlen, const uint8_t *query, int m, const int8_t 
 #if defined __ARM_NEON
 // This macro implicitly uses each function's `zero` local variable
 #define _mm_slli_si128(a, n) (vextq_u8(zero, (a), 16 - (n)))
-#elif defined __VSX__
-#define _mm_slli_si128(a, n) (vec_sll((a), 8*(n)))
 #endif
 
 kswr_t ksw_u8(kswq_t *q, int tlen, const uint8_t *target, int _o_del, int _e_del, int _o_ins, int _e_ins, int xtra) // the first gap costs -(_o+_e)
