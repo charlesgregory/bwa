@@ -5,26 +5,11 @@
 
 typedef vector unsigned char __m128i;
 
-static inline __m128i _mm_load_si128(const __m128i *ptr) { return vec_ld(0, ptr); }
-static inline __m128i _mm_set1_epi32(int n) { return (__m128i)vec_splats(n); }
-static inline void _mm_store_si128(__m128i *ptr, __m128i a) { vec_st(a, 0, ptr); }
-
-static inline __m128i _mm_adds_epu8(__m128i a, __m128i b) { return vec_adds(a, b); }
-static inline __m128i _mm_max_epu8(__m128i a, __m128i b) { return vec_max(a, b); }
-static inline __m128i _mm_set1_epi8(int8_t n) { return (__m128i)vec_splats(n); }
-static inline __m128i _mm_subs_epu8(__m128i a, __m128i b) { return vec_subs(a, b); }
-
-#define M128I(a)  (vector unsigned char)((a))
-#define UM128I(a) (vector unsigned char)((a))
-#define S16(a)    (vector signed short)((a))
-#define U16(a)    (vector unsigned short)((a))
-
-static inline __m128i _mm_adds_epi16(__m128i a, __m128i b) { return M128I(vec_adds(S16(a), S16(b))); }
-static inline __m128i _mm_cmpgt_epi16(__m128i a, __m128i b) { return UM128I(vec_cmpgt(S16(a), S16(b))); }
-static inline __m128i _mm_set1_epi16(int16_t n) { return (__m128i)(vec_splats(n)); }
-static inline __m128i _mm_subs_epu16(__m128i a, __m128i b) { return UM128I(vec_subs(U16(a), U16(b))); }
-
-/*===---- emmintrin.h - Implementation of SSE2 intrinsics on PowerPC -------===
+/* Much of the below code was derived from: https://clang.llvm.org/doxygen/ppc__wrappers_2emmintrin_8h_source.html
+ * While this code is not part of the LLVM project, it is derived under Apache-2.0 WITH LLVM-exception license
+ * Below is the original comment from that file.
+ *
+ *===---- emmintrin.h - Implementation of SSE2 intrinsics on PowerPC -------===
  *
  * Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
  * See https://llvm.org/LICENSE.txt for license information.
@@ -42,6 +27,40 @@ typedef __vector short __v8hi;
 typedef __vector unsigned short __v8hu;
 typedef __vector signed char __v16qi;
 typedef __vector unsigned char __v16qu;
+
+static inline __m128i _mm_set_epi32(int q3, int q2, int q1, int q0) {
+    return (__m128i)(__v4si){q0, q1, q2, q3};
+}
+
+static inline __m128i _mm_set_epi8(
+    int8_t q15, int8_t q14, int8_t q13, int8_t q12, 
+    int8_t q11, int8_t q10, int8_t q9, int8_t q8, 
+    int8_t q7, int8_t q6, int8_t q5, int8_t q4, 
+    int8_t q3, int8_t q2, int8_t q1, int8_t q0
+    ) {
+    return (__m128i)(__v16qi){q0, q1, q2, q3, q4, q5, q6, q7, q8, q9, q10, q11, q12, q13, q14, q15};
+}
+
+static inline __m128i _mm_set_epi16(int16_t q7, int16_t q6, int16_t q5, int16_t q4, int16_t q3, int16_t q2, int16_t q1, int16_t q0) {
+    return (__m128i)(__v8hi){q0, q1, q2, q3, q4, q5, q6, q7};
+}
+
+static inline __m128i _mm_set1_epi16(int16_t n) { return _mm_set_epi16(n, n, n, n, n, n, n, n); }
+
+static inline __m128i _mm_load_si128(const __m128i *ptr) { return *ptr; }
+static inline __m128i _mm_set1_epi32(int n) { return _mm_set_epi32(n, n, n, n); }
+static inline void _mm_store_si128(__m128i *ptr, __m128i a) { vec_st(a, 0, ptr); }
+
+static inline __m128i _mm_adds_epu8(__m128i a, __m128i b) { return vec_adds(a, b); }
+static inline __m128i _mm_max_epu8(__m128i a, __m128i b) { return vec_max(a, b); }
+static inline __m128i _mm_set1_epi8(int8_t n) { return _mm_set_epi8(n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n); }
+static inline __m128i _mm_subs_epu8(__m128i a, __m128i b) { return vec_subs(a, b); }
+
+static inline __m128i _mm_adds_epi16(__m128i a, __m128i b) { return (__m128i)(vec_adds((__v8hi)a, (__v8hi)b)); }
+static inline __m128i _mm_cmpgt_epi16(__m128i a, __m128i b) { return (__m128i)(vec_cmpgt((__v8hi)a, (__v8hi)b)); }
+static inline __m128i _mm_subs_epu16(__m128i a, __m128i b) { return (__m128i)(vec_subs((__v8hu)(a), (__v8hu)(b))); }
+
+
 
 static inline __m128i _mm_slli_si128(__m128i a, const int imm8) {
   __v16qu result;
@@ -125,10 +144,5 @@ static inline int _mm_extract_epi16(__m128i const a, int const n) {
 static inline __m128i _mm_cmpeq_epi8(__m128i a, __m128i b) {
   return (__m128i)vec_cmpeq((__v16qi)a, (__v16qi)b);
 }
-
-#undef M128I
-#undef UM128I
-#undef S16
-#undef U16
 
 #endif
