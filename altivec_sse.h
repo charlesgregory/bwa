@@ -21,7 +21,6 @@ static inline __m128i _mm_subs_epu8(__m128i a, __m128i b) { return vec_subs(a, b
 
 static inline __m128i _mm_adds_epi16(__m128i a, __m128i b) { return M128I(vec_adds(S16(a), S16(b))); }
 static inline __m128i _mm_cmpgt_epi16(__m128i a, __m128i b) { return UM128I(vec_cmpgt(S16(a), S16(b))); }
-static inline __m128i _mm_max_epi16(__m128i a, __m128i b) { return M128I(vec_max(S16(a), S16(b))); }
 static inline __m128i _mm_set1_epi16(int16_t n) { return (__m128i)(vec_splats(n)); }
 static inline __m128i _mm_subs_epu16(__m128i a, __m128i b) { return UM128I(vec_subs(U16(a), U16(b))); }
 
@@ -45,14 +44,14 @@ typedef __vector signed char __v16qi;
 typedef __vector unsigned char __v16qu;
 
 static inline __m128i _mm_slli_si128(__m128i a, const int imm8) {
-  __m128i result;
-  const __m128i zeros = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+  __v16qu result;
+  const __v16qu zeros = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
  
   if (imm8 < 16)
 #ifdef __LITTLE_ENDIAN__
-    result = vec_sld(a, zeros, imm8);
+    result = vec_sld((__v16qu)a, zeros, imm8);
 #else
-    result = vec_sld(zeros, a, (16 - imm8));
+    result = vec_sld(zeros, (__v16qu)a, (16 - imm8));
 #endif
   else
     result = zeros;
@@ -65,30 +64,26 @@ static inline __m128i _mm_slli_si128(__m128i a, const int imm8) {
    element in A.  */
 static inline int _mm_movemask_epi8(__m128i a) {
 #ifdef _ARCH_PWR10
-  return vec_extractm((__m128i)a);
+  return vec_extractm((__v16qu)a);
 #else
-  __vector unsigned long long __result;
-  static const __vector unsigned char __perm_mask = {
+  __vector unsigned long long result;
+  static const __vector unsigned char perm_mask = {
       0x78, 0x70, 0x68, 0x60, 0x58, 0x50, 0x48, 0x40,
       0x38, 0x30, 0x28, 0x20, 0x18, 0x10, 0x08, 0x00};
  
-  __result = ((__vector unsigned long long)vec_vbpermq(
-      (__vector unsigned char)a, (__vector unsigned char)__perm_mask));
+  result = ((__vector unsigned long long)vec_vbpermq(
+      (__vector unsigned char)a, (__vector unsigned char)perm_mask));
  
 #ifdef __LITTLE_ENDIAN__
-  return __result[1];
+  return result[1];
 #else
-  return __result[0];
+  return result[0];
 #endif
 #endif /* !_ARCH_PWR10 */
 }
 
-static inline __m128i _mm_srli_si128(__m128i a, const int n) {
-  return _mm_bsrli_si128(a, n);
-}
-
 static inline __m128i _mm_bsrli_si128(__m128i a, const int n) {
-  __m128i __result;
+  __m128i result;
   const __m128i zeros = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
  
   if (n < 16)
@@ -97,21 +92,26 @@ static inline __m128i _mm_bsrli_si128(__m128i a, const int n) {
       /* Would like to use Vector Shift Left Double by Octet
          Immediate here to use the immediate form and avoid
          load of n * 8 value into a separate VR.  */
-      __result = vec_sld(zeros, a, (16 - n));
+      result = vec_sld(zeros, a, (16 - n));
     else
 #endif
     {
       __m128i __shift = vec_splats((unsigned char)(n * 8));
 #ifdef __LITTLE_ENDIAN__
-      __result = vec_sro(a, __shift);
+      result = vec_sro(a, __shift);
 #else
-    __result = vec_slo(a, __shift);
+    result = vec_slo(a, __shift);
 #endif
     }
   else
-    __result = zeros;
+    result = zeros;
  
-  return (__m128i)__result;
+  return (__m128i)result;
+}
+
+
+static inline __m128i _mm_srli_si128(__m128i a, const int n) {
+  return _mm_bsrli_si128(a, n);
 }
 
 static inline __m128i _mm_max_epi16(__m128i a, __m128i b) {
