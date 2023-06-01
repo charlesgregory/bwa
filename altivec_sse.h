@@ -93,7 +93,7 @@ static inline __m128i _mm_bsrli_si128(__m128i a, const int n) {
  
   if (n < 16)
 #ifdef __LITTLE_ENDIAN__
-    if (__builtin_constant_p(n))
+    if (builtin_constant_p(n))
       /* Would like to use Vector Shift Left Double by Octet
          Immediate here to use the immediate form and avoid
          load of n * 8 value into a separate VR.  */
@@ -114,12 +114,16 @@ static inline __m128i _mm_bsrli_si128(__m128i a, const int n) {
   return (__m128i)__result;
 }
 
-static inline __m128i _mm_max_epi16(__m128i a, __m128i __B) {
-  return (__m128i)vec_max((__v8hi)a, (__v8hi)__B);
+static inline __m128i _mm_max_epi16(__m128i a, __m128i b) {
+  return (__m128i)vec_max((__v8hi)a, (__v8hi)b);
 }
 
 static inline int _mm_extract_epi16(__m128i const a, int const n) {
   return (unsigned short)((__v8hi)a)[n & 7];
+}
+
+static inline __m128i _mm_cmpeq_epi8(__m128i a, __m128i b) {
+  return (__m128i)vec_cmpeq((__v16qi)a, (__v16qi)b);
 }
 
 #undef M128I
